@@ -11,7 +11,7 @@
         AllowsTransparency="True"
         WindowStartupLocation="CenterOwner"
         Background="Transparent"
-        FontFamily="Montserrat Alternates"
+        FontFamily="{StaticResource MontserratAlt}"
         FontSize="14"
         FontWeight="Bold"
         TextOptions.TextFormattingMode="Display">
@@ -31,15 +31,15 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
                     <TextBlock Grid.Column="0" Text="{Binding Frequency}"
-                               FontSize="20" FontWeight="Medium"
+                               FontSize="18" FontWeight="Normal"
                                Foreground="{DynamicResource TextBrush}"
                                Margin="10,0,0,0" VerticalAlignment="Center"/>
                     <TextBlock Grid.Column="1" Text="{Binding Name}"
-                               FontSize="20" FontWeight="Medium"
+                               FontSize="18" FontWeight="Normal"
                                Foreground="{DynamicResource TextBrush}"
                                HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     <TextBlock Grid.Column="2" Text="{Binding Date}"
-                               FontSize="20" FontWeight="Medium"
+                               FontSize="18" FontWeight="Normal"
                                Foreground="{DynamicResource TextBrush}"
                                HorizontalAlignment="Right" Margin="0,0,10,0" VerticalAlignment="Center"/>
                 </Grid>
