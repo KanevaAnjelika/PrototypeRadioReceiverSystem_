@@ -6,11 +6,13 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using PrototypeRadioReceiverSystem.Models;
 
 namespace PrototypeRadioReceiverSystem
 {
     /// <summary>
     /// Логика взаимодействия для LogWindow.xaml
+    /// Представление (View) журнала операций.
     /// </summary>
     public partial class LogWindow : Window
     {
@@ -18,13 +20,17 @@ namespace PrototypeRadioReceiverSystem
         private List<LogEntry> _errors = new List<LogEntry>();
         private bool _showActions = true;
 
+        // Модель журнала из архитектуры MVC
+        private readonly StorageOperationsLog _storageLog = new StorageOperationsLog();
+
         public LogWindow()
         {
             InitializeComponent();
             LoadDemoData();
             UpdateTabColors();
-            LogListBox.ItemsSource = _actions;
+            updateLogTable();
         }
+
 
         private void LoadDemoData()
         {
@@ -57,17 +63,26 @@ namespace PrototypeRadioReceiverSystem
             }
         }
 
+        /// <summary>
+        /// Обновление таблицы журнала: перестраивает список под активную вкладку.
+        /// </summary>
+        private void updateLogTable()
+        {
+            LogListBox.ItemsSource = null;
+            LogListBox.ItemsSource = _showActions ? _actions : _errors;
+        }
+
         private void ActionsTab_Click(object sender, RoutedEventArgs e)
         {
             _showActions = true;
-            LogListBox.ItemsSource = _actions;
+            updateLogTable();
             UpdateTabColors();
         }
 
         private void ErrorsTab_Click(object sender, RoutedEventArgs e)
         {
             _showActions = false;
-            LogListBox.ItemsSource = _errors;
+            updateLogTable();
             UpdateTabColors();
         }
 
@@ -78,15 +93,31 @@ namespace PrototypeRadioReceiverSystem
             else
                 _errors.Clear();
 
-            LogListBox.ItemsSource = null;
-            LogListBox.ItemsSource = _showActions ? _actions : _errors;
+            updateLogTable();
             ShowToast("Журнал очищен", 0x75, 0x75, 0x75);
         }
 
         private void SaveButton_Click(object sender, RoutedEventArgs e)
         {
+            btnSave_Click(sender, e);
+        }
+
+        /// <summary>
+        /// Сохранение журнала в файл через модель StorageOperationsLog.
+        /// </summary>
+        private void btnSave_Click(object sender, RoutedEventArgs e)
+        {
+            _storageLog.clearLog();
+            foreach (LogEntry entry in _actions)
+                _storageLog.addRecord(entry.Date + " " + entry.Time + " - " + entry.Event);
+            foreach (LogEntry entry in _errors)
+                _storageLog.addRecord(entry.Date + " " + entry.Time + " - ОШИБКА: " + entry.Event);
+
+            // TODO: показывать диалог выбора файла вместо записи рядом с exe
+            _storageLog.saveToFile();
             ShowToast("Журнал сохранён в файл", 0x4C, 0xAF, 0x50);
         }
+
 
         private void CloseBtn_Click(object sender, RoutedEventArgs e)
         {

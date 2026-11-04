@@ -1,22 +1,32 @@
 using System;
+using System.Globalization;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using PrototypeRadioReceiverSystem.Controllers;
+using PrototypeRadioReceiverSystem.Models;
 
 namespace PrototypeRadioReceiverSystem
 {
     /// <summary>
     /// Логика взаимодействия для MainWindow.xaml
+    /// Представление (View) в архитектуре MVC: только отображает состояние
+    /// и передаёт нажатия кнопок в MainController.
     /// </summary>
     public partial class MainWindow : Window
     {
         private bool _isDarkTheme = false;
         private bool _isConnected = false;
 
+        // Контроллер MVC: модель и журнал создаются внутри него
+        private readonly MainController _controller = new MainController();
+
         public MainWindow()
         {
             InitializeComponent();
+            _controller.UiNeedsUpdate += RefreshFromModel;
         }
+
 
         #region Тема
 
@@ -93,7 +103,10 @@ namespace PrototypeRadioReceiverSystem
 
         private void ConnectToPort()
         {
+            // TODO: заменить переключатель вида на реальный вызов
+            // _controller.connectPort(PortComboBox.Text) / _controller.disconnectPort()
             _isConnected = !_isConnected;
+
 
             if (_isConnected)
             {
@@ -109,12 +122,60 @@ namespace PrototypeRadioReceiverSystem
 
         #endregion
 
-        #region Кнопки управления (заглушки)
+        #region Кнопки управления
 
-        private void FreqUpButton_Click(object sender, RoutedEventArgs e) { }
-        private void FreqDownButton_Click(object sender, RoutedEventArgs e) { }
-        private void ScanButton_Click(object sender, RoutedEventArgs e) { }
-        private void SaveButton_Click(object sender, RoutedEventArgs e) { }
+        // Обработчики из XAML передают работу методам с именами из документации (btn*_Click),
+        // а те - контроллеру. Так View остаётся тонким слоем.
+        private void FreqUpButton_Click(object sender, RoutedEventArgs e) { btnUp_Click(sender, e); }
+        private void FreqDownButton_Click(object sender, RoutedEventArgs e) { btnDown_Click(sender, e); }
+        private void ScanButton_Click(object sender, RoutedEventArgs e) { btnScan_Click(sender, e); }
+        private void SaveButton_Click(object sender, RoutedEventArgs e) { btnSave_Click(sender, e); }
+
+        /// <summary>Кнопка «Частота +»: шаг 0.1 МГц вверх.</summary>
+        private void btnUp_Click(object sender, RoutedEventArgs e)
+        {
+            _controller.onButtonClick(MainController.CommandUp);
+        }
+
+        /// <summary>Кнопка «Частота -»: шаг 0.1 МГц вниз.</summary>
+        private void btnDown_Click(object sender, RoutedEventArgs e)
+        {
+            _controller.onButtonClick(MainController.CommandDown);
+        }
+
+        /// <summary>Кнопка «Поиск»: запуск автопоиска станции.</summary>
+        private void btnScan_Click(object sender, RoutedEventArgs e)
+        {
+            _controller.onButtonClick(MainController.CommandScan);
+            // TODO: дождаться строки состояния от платы и показать найденную станцию
+        }
+
+        /// <summary>Кнопка «Сохранить»: текущая частота в избранное и в EEPROM платы.</summary>
+        private void btnSave_Click(object sender, RoutedEventArgs e)
+        {
+            _controller.onButtonClick(MainController.CommandSave);
+            // TODO: обновить список в окне «Избранное»
+        }
+
+        /// <summary>
+        /// Обновление таблицы журнала в главном окне.
+        /// Реального журнала в главном окне пока нет - метод-заглушка для соответствия документации.
+        /// </summary>
+        private void updateLogTable()
+        {
+            // TODO: вывести _controller.Log.getRecords() в таблицу главного окна
+        }
+
+        /// <summary>Обновление элементов окна новым состоянием модели (вызывается контроллером).</summary>
+        private void RefreshFromModel(RadioData data)
+        {
+            if (data == null) return;
+
+            // Частота приводится к invariant-формату, чтобы делитель остался точкой: "101.5 МГц"
+            FrequencyTextBlock.Text = data.getFrequency().ToString("0.0", CultureInfo.InvariantCulture) + " МГц";
+
+            // Уровень сигнала отображается из строки состояния платы (см. SecondController.receiveData)
+        }
 
         #endregion
 
